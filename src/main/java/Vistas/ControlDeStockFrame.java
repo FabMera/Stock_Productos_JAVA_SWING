@@ -19,8 +19,8 @@ public class ControlDeStockFrame extends JFrame {
     private JButton botonGuardar, botonModificar, botonEliminar, botonReporte, botonLimpiar;
     private JTable tabla;
     private DefaultTableModel modelo;
-    private ProductoController productoController;
-    private CategoriaController categoriaController;
+    private final ProductoController productoController;
+    private final CategoriaController categoriaController;
 
     public ControlDeStockFrame() {
         super("Productos");
@@ -177,11 +177,17 @@ public class ControlDeStockFrame extends JFrame {
             return;
         }
         Optional.ofNullable(modelo.getValueAt(tabla.getSelectedRow(), tabla.getSelectedColumn())).ifPresentOrElse(fila -> {
-            Integer id = (Integer) modelo.getValueAt(tabla.getSelectedRow(), 0);
+            Integer id = Integer.valueOf(modelo.getValueAt(tabla.getSelectedRow(), 0).toString());
             String nombre = (String) modelo.getValueAt(tabla.getSelectedRow(), 1);
             String descripcion = (String) modelo.getValueAt(tabla.getSelectedRow(), 2);
-
-            this.productoController.modificar(nombre, descripcion, id);
+            Integer cantidad = Integer.valueOf(modelo.getValueAt(tabla.getSelectedRow(), 3).toString());
+            int cantidadModificada;
+            try {
+                cantidadModificada = this.productoController.modificar(nombre, descripcion, id, cantidad);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            JOptionPane.showMessageDialog(this, "Se modificaron " + cantidadModificada + " registros");
         }, () -> JOptionPane.showMessageDialog(this, "Debe seleccionar un item"));
 
 
