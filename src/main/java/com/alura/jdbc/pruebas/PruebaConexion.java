@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class PruebaConexion {
     public static void main(String[] args) throws SQLException {
-        Connection connection = new CreaConexion().recuperarConexion();
+        Connection connection = new ConnectionFactory().recuperarConexion();
 
         System.out.println("Cerrando la conexion..");
         connection.close();

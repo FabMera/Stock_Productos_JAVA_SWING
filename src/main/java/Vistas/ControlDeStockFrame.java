@@ -2,6 +2,7 @@ package Vistas;
 
 import com.alura.jdbc.controlador.CategoriaController;
 import com.alura.jdbc.controlador.ProductoController;
+import com.alura.jdbc.modelo.Producto;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -119,42 +120,23 @@ public class ControlDeStockFrame extends JFrame {
     }
 
     private void configurarAccionesDelFormulario(Container container) {
-        botonGuardar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                guardar();
-                limpiarTabla();
-                cargarTabla();
-            }
+        botonGuardar.addActionListener(e -> {
+            guardar();
+            limpiarTabla();
+            cargarTabla();
         });
-        botonLimpiar.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-                limpiarFormulario();
-            }
+        botonLimpiar.addActionListener(e -> limpiarFormulario());
+        botonEliminar.addActionListener(e -> {
+            eliminar();
+            limpiarTabla();
+            cargarTabla();
         });
-        botonEliminar.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-                eliminar();
-                limpiarTabla();
-                cargarTabla();
-            }
+        botonModificar.addActionListener(e -> {
+            modificar();
+            limpiarTabla();
+            cargarTabla();
         });
-        botonModificar.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-                modificar();
-                limpiarTabla();
-                cargarTabla();
-            }
-        });
-        botonReporte.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                generarReporte();
-            }
-        });
+        botonReporte.addActionListener(e -> generarReporte());
 
 
     }
@@ -181,13 +163,9 @@ public class ControlDeStockFrame extends JFrame {
             String nombre = (String) modelo.getValueAt(tabla.getSelectedRow(), 1);
             String descripcion = (String) modelo.getValueAt(tabla.getSelectedRow(), 2);
             Integer cantidad = Integer.valueOf(modelo.getValueAt(tabla.getSelectedRow(), 3).toString());
-            int cantidadModificada;
-            try {
-                cantidadModificada = this.productoController.modificar(nombre, descripcion, id, cantidad);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-            JOptionPane.showMessageDialog(this, "Se modificaron " + cantidadModificada + " registros");
+            var filasModificadas = this.productoController.modificar(nombre, descripcion, cantidad,id);
+
+            JOptionPane.showMessageDialog(this, String.format("%d item modificado con exito", filasModificadas));
         }, () -> JOptionPane.showMessageDialog(this, "Debe seleccionar un item"));
 
 
@@ -200,37 +178,20 @@ public class ControlDeStockFrame extends JFrame {
         }
         Optional.ofNullable(modelo.getValueAt(tabla.getSelectedRow(), tabla.getSelectedColumn())).ifPresentOrElse(fila -> {
             Integer id = Integer.valueOf(modelo.getValueAt(tabla.getSelectedRow(), 0).toString());
-            int cantidadEliminada;
-            try {
-                cantidadEliminada = this.productoController.eliminar(id);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
+            var filasModificadas = this.productoController.eliminar(id);
 
             modelo.removeRow(tabla.getSelectedRow());
-            JOptionPane.showMessageDialog(this, "Se eliminaron " + cantidadEliminada + " registros");
+            JOptionPane.showMessageDialog(this, String.format("%d item eliminado con exito", filasModificadas));
         }, () -> JOptionPane.showMessageDialog(this, "Debe seleccionar un item"));
     }
 
     private void cargarTabla() {
-        try {
-            var producto = this.productoController.listar();
-            try {
-
-                producto.forEach(product -> modelo.addRow(new Object[]{
-                        product.get("id"),
-                        product.get("nombre"),
-                        product.get("descripcion"),
-                        product.get("cantidad"),
-                }));
-            } catch (Exception e) {
-                throw e;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-
+        var producto = this.productoController.listar();
+        producto.forEach(product -> modelo.addRow(new Object[]{
+                product.getId(),
+                product.getNombre(),
+                product.getDescripcion(),
+                product.getCantidad()}));
     }
 
     private void guardar() {
@@ -247,19 +208,9 @@ public class ControlDeStockFrame extends JFrame {
         }
 
         //TODO
-        var producto = new HashMap<String, String>();
-        producto.put("nombre", textoNombre.getText());
-        producto.put("descripcion", textotDescripcion.getText());
-        producto.put("cantidad", String.valueOf(cantidadInt));
-
-
+        var producto = new Producto(textoNombre.getText(), textotDescripcion.getText(), cantidadInt);
         var categoria = comboCategoria.getSelectedItem();
-
-        try {
-            this.productoController.guardar(producto);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        this.productoController.guardar(producto);
 
         JOptionPane.showMessageDialog(this, "Producto guardado con exito");
         this.limpiarFormulario();
